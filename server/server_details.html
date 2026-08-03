@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Server Status & Environment Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #090d16;
+            --bg-card: rgba(17, 24, 39, 0.75);
+            --border-color: rgba(255, 255, 255, 0.1);
+            --text-main: #f9fafb;
+            --text-muted: #9ca3af;
+            --accent-purple: #a855f7;
+            --accent-cyan: #06b6d4;
+            --accent-green: #10b981;
+            --accent-yellow: #f59e0b;
+            --accent-red: #ef4444;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 24px 16px;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        .ambient-glow {
+            position: absolute;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(6, 182, 212, 0.12) 0%, rgba(168, 85, 247, 0.05) 50%, transparent 70%);
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .dashboard-container {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 860px;
+            background: var(--bg-card);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 32px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.05);
+        }
+
+        .dashboard-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 16px;
+            padding-bottom: 24px;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 28px;
+        }
+
+        .header-title-area {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .server-icon {
+            width: 46px;
+            height: 46px;
+            border-radius: 12px;
+            background: rgba(6, 182, 212, 0.15);
+            border: 1px solid rgba(6, 182, 212, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-cyan);
+        }
+
+        .header-title-area h1 {
+            font-size: 1.4rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #38bdf8, #a855f7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header-title-area p {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .status-badge.online {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--accent-green);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .status-badge.offline {
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--accent-red);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .status-badge.online .status-dot {
+            background: var(--accent-green);
+            box-shadow: 0 0 10px var(--accent-green);
+            animation: pulse 1.8s infinite;
+        }
+
+        .status-badge.offline .status-dot {
+            background: var(--accent-red);
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.4; transform: scale(0.85); }
+        }
+
+        /* Parameter Grid */
+        .details-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 16px;
+            margin-bottom: 28px;
+        }
+
+        .detail-card {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 16px 20px;
+            transition: transform 0.2s ease, border-color 0.2s ease;
+        }
+
+        .detail-card:hover {
+            transform: translateY(-2px);
+            border-color: rgba(99, 102, 241, 0.4);
+        }
+
+        .card-label {
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .card-value {
+            font-family: 'Fira Code', monospace;
+            font-size: 1.05rem;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            word-break: break-all;
+        }
+
+        .card-value.highlight-purple {
+            color: #c084fc;
+        }
+
+        .card-value.highlight-green {
+            color: var(--accent-green);
+        }
+
+        .card-value.highlight-yellow {
+            color: var(--accent-yellow);
+        }
+
+        /* Controls Footer */
+        .dashboard-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .refresh-btn {
+            background: linear-gradient(135deg, #0284c7, #06b6d4);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-size: 0.88rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3);
+        }
+
+        .refresh-btn:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        .last-updated {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="ambient-glow"></div>
+
+    <div class="dashboard-container">
+        <!-- Dashboard Header -->
+        <div class="dashboard-header">
+            <div class="header-title-area">
+                <div class="server-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect>
+                        <rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect>
+                        <line x1="6" y1="6" x2="6.01" y2="6"></line>
+                        <line x1="6" y1="18" x2="6.01" y2="18"></line>
+                    </svg>
+                </div>
+                <div>
+                    <h1>Server Details Monitor</h1>
+                    <p>Live environment & status parameters of running Flask server</p>
+                </div>
+            </div>
+
+            <div class="status-badge offline" id="server-status-badge">
+                <span class="status-dot"></span>
+                <span id="server-status-text">CONNECTING...</span>
+            </div>
+        </div>
+
+        <!-- Details Card Grid -->
+        <div class="details-grid">
+            <div class="detail-card">
+                <div class="card-label">💻 Device Name</div>
+                <div class="card-value highlight-purple" id="val-device">Detecting...</div>
+            </div>
+
+            <div class="detail-card">
+                <div class="card-label">🌐 IP Address</div>
+                <div class="card-value" id="val-ip">Detecting...</div>
+            </div>
+
+            <div class="detail-card">
+                <div class="card-label">🖥️ Operating System</div>
+                <div class="card-value" id="val-os">Detecting...</div>
+            </div>
+
+            <div class="detail-card">
+                <div class="card-label">🌐 Browser / Engine</div>
+                <div class="card-value" id="val-browser">Detecting...</div>
+            </div>
+
+            <div class="detail-card">
+                <div class="card-label">📐 Screen Resolution</div>
+                <div class="card-value highlight-yellow" id="val-resolution">Detecting...</div>
+            </div>
+
+            <div class="detail-card">
+                <div class="card-label">🕒 Current Time</div>
+                <div class="card-value highlight-green" id="val-time">Detecting...</div>
+            </div>
+
+            <div class="detail-card">
+                <div class="card-label">⌨️ Keyboard Layout</div>
+                <div class="card-value" id="val-keyboard">Detecting...</div>
+            </div>
+
+            <div class="detail-card">
+                <div class="card-label">🔑 Session ID</div>
+                <div class="card-value highlight-green" id="val-session">Detecting...</div>
+            </div>
+        </div>
+
+        <!-- Connected Devices Table -->
+        <div style="margin-bottom: 28px;">
+            <div style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between;">
+                <span>📱 Connected Client Devices (<span id="connected-count" style="color: var(--accent-green);">0</span>)</span>
+                <span style="font-size: 0.75rem; color: var(--accent-cyan);">Multi-Device Session Tracker</span>
+            </div>
+            <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid var(--border-color); border-radius: 12px; overflow: hidden;">
+                <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.85rem;">
+                    <thead>
+                        <tr style="background: rgba(255, 255, 255, 0.03); border-bottom: 1px solid var(--border-color); color: var(--text-muted);">
+                            <th style="padding: 12px 16px;">Device Name</th>
+                            <th style="padding: 12px 16px;">IP Address</th>
+                            <th style="padding: 12px 16px;">Browser</th>
+                            <th style="padding: 12px 16px;">Resolution</th>
+                            <th style="padding: 12px 16px;">Session ID</th>
+                            <th style="padding: 12px 16px;">Keys Sent</th>
+                            <th style="padding: 12px 16px;">Last Active</th>
+                        </tr>
+                    </thead>
+                    <tbody id="devices-table-body" style="font-family: 'Fira Code', monospace;">
+                        <tr>
+                            <td colspan="7" style="padding: 16px; text-align: center; color: var(--text-muted); font-style: italic;">No client devices connected yet. Type in client login page to establish session.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Live Key Events Feed -->
+        <div style="margin-bottom: 28px;">
+            <div style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between;">
+                <span>📡 Live Key Interception Feed</span>
+                <span style="font-family: 'Fira Code', monospace; color: var(--accent-cyan); font-size: 0.75rem;">HTTP 204 POST /log</span>
+            </div>
+            <div id="terminal-feed" style="background: #030712; border: 1px solid var(--border-color); border-radius: 12px; padding: 16px; font-family: 'Fira Code', monospace; font-size: 0.85rem; color: #4ade80; height: 180px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px;">
+                <div style="color: var(--text-muted); font-style: italic;" id="feed-placeholder">Waiting for incoming keystrokes from client...</div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="dashboard-footer">
+            <div class="last-updated" id="last-updated">Last Checked: Never</div>
+            <button class="refresh-btn" onclick="fetchServerStatus()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="23 4 23 10 17 10"></polyline>
+                    <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                </svg>
+                <span>Refresh Status</span>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const statusBadge = document.getElementById('server-status-badge');
+        const statusText = document.getElementById('server-status-text');
+        const feedContainer = document.getElementById('terminal-feed');
+        const devicesTableBody = document.getElementById('devices-table-body');
+        const connectedCountEl = document.getElementById('connected-count');
+
+        async function fetchServerStatus() {
+            try {
+                const response = await fetch('http://127.0.0.1:5000/status');
+                if (!response.ok) throw new Error('Server returned non-200');
+                const data = await response.json();
+
+                // Update Status Pill
+                statusBadge.className = 'status-badge online';
+                statusText.textContent = `SERVER ${data.status || 'ACTIVE'}`;
+
+                // Update Grid Parameters
+                document.getElementById('val-device').textContent = data.device_name || 'DESKTOP-SYSTEM';
+                document.getElementById('val-ip').textContent = data.ip_address || '127.0.0.1';
+                document.getElementById('val-os').textContent = data.os || 'Windows';
+                document.getElementById('val-browser').textContent = data.browser || 'Flask 3.1';
+                document.getElementById('val-resolution').textContent = data.resolution || '1920 × 1080';
+                document.getElementById('val-time').textContent = data.current_time || new Date().toLocaleString();
+                document.getElementById('val-keyboard').textContent = data.keyboard_layout || 'US Standard (Demo)';
+                document.getElementById('val-session').textContent = data.session_id || '5C9A-91FD-2A6C';
+
+                document.getElementById('last-updated').textContent = `Last Checked: ${new Date().toLocaleTimeString()} (Server Running)`;
+
+                // Update Connected Devices Table
+                if (data.connected_devices && data.connected_devices.length > 0) {
+                    connectedCountEl.textContent = data.connected_count || data.connected_devices.length;
+                    devicesTableBody.innerHTML = '';
+                    data.connected_devices.forEach(dev => {
+                        const tr = document.createElement('tr');
+                        tr.style.borderBottom = '1px solid rgba(255,255,255,0.05)';
+                        tr.innerHTML = `
+                            <td style="padding: 12px 16px; color:#c084fc; font-weight:600;">${dev.device_name}</td>
+                            <td style="padding: 12px 16px; color:#06b6d4;">${dev.ip}</td>
+                            <td style="padding: 12px 16px; color:#f9fafb;">${dev.browser}</td>
+                            <td style="padding: 12px 16px; color:#f59e0b;">${dev.resolution}</td>
+                            <td style="padding: 12px 16px; color:#10b981;">${dev.session_id}</td>
+                            <td style="padding: 12px 16px; color:#38bdf8; text-align:center;">${dev.keystrokes_count}</td>
+                            <td style="padding: 12px 16px; color:#9ca3af;">${dev.last_seen}</td>
+                        `;
+                        devicesTableBody.appendChild(tr);
+                    });
+                } else {
+                    connectedCountEl.textContent = '0';
+                    devicesTableBody.innerHTML = `
+                        <tr>
+                            <td colspan="7" style="padding: 16px; text-align: center; color: var(--text-muted); font-style: italic;">No client devices connected yet. Type in client login page to establish session.</td>
+                        </tr>`;
+                }
+
+                // Update Live Keystrokes Feed
+                if (data.recent_keystrokes && data.recent_keystrokes.length > 0) {
+                    feedContainer.innerHTML = '';
+                    data.recent_keystrokes.forEach(item => {
+                        const line = document.createElement('div');
+                        if (item.type === "WEB INTERCEPTION") {
+                            line.innerHTML = `<span style="color:#9ca3af;">[${item.time}]</span> <span style="color:#38bdf8;">[${item.type}]</span> Key: <strong style="color:#f59e0b;">'${item.key}'</strong> | IP: <span style="color:#06b6d4;">${item.ip}</span> | Session: <span style="color:#10b981;">${item.session_id}</span>`;
+                        } else {
+                            line.innerHTML = `<span style="color:#9ca3af;">[${item.time}]</span> <span style="color:#a855f7;">[${item.type}]</span> Key: <strong style="color:#4ade80;">'${item.key}'</strong>`;
+                        }
+                        feedContainer.appendChild(line);
+                    });
+                    feedContainer.scrollTop = feedContainer.scrollHeight;
+                }
+            } catch (error) {
+                statusBadge.className = 'status-badge offline';
+                statusText.textContent = 'SERVER OFFLINE';
+                document.getElementById('last-updated').textContent = `Last Checked: ${new Date().toLocaleTimeString()} (Server Stopped)`;
+            }
+        }
+
+        // Fetch on load & poll every 1 second
+        fetchServerStatus();
+        setInterval(fetchServerStatus, 1000);
+    </script>
+</body>
+
+</html>
