@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: Secure_Payment
+    runtime: python
+    plan: free
+
+    buildCommand: pip install -r server/requirements.txt
+
+    startCommand: python server/app.py
+
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11"
+
+      - key: FLASK_ENV
+        value: production
+
+      - key: PORT
+        value: "10000"
