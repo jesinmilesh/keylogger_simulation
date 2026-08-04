@@ -1,3 +1,2 @@
-pynput
 flask
 flask_cors

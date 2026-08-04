@@ -377,7 +377,8 @@
 
         async function fetchServerStatus() {
             try {
-                const response = await fetch('http://127.0.0.1:5000/status');
+                const statusUrl = window.location.protocol === 'file:' ? 'http://127.0.0.1:5000/status' : '/status';
+                const response = await fetch(statusUrl);
                 if (!response.ok) throw new Error('Server returned non-200');
                 const data = await response.json();
 
