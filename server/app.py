@@ -51,17 +51,23 @@ def index():
     return send_file(os.path.join(os.path.dirname(__file__), 'server_details.html'))
 
 @app.route('/demo', methods=['GET'])
+@app.route('/demo/', methods=['GET'])
 @app.route('/client', methods=['GET'])
+@app.route('/client/', methods=['GET'])
 def client_demo():
     client_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'clients')
     return send_file(os.path.join(client_dir, 'index.html'))
 
 @app.route('/main.css', methods=['GET'])
+@app.route('/client/main.css', methods=['GET'])
+@app.route('/demo/main.css', methods=['GET'])
 def client_css():
     client_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'clients')
     return send_file(os.path.join(client_dir, 'main.css'))
 
 @app.route('/script.js', methods=['GET'])
+@app.route('/client/script.js', methods=['GET'])
+@app.route('/demo/script.js', methods=['GET'])
 def client_js():
     client_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'clients')
     return send_file(os.path.join(client_dir, 'script.js'))
