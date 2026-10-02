@@ -16,6 +16,8 @@ The project is structured into two main components:
 
 ```
 keylogger_simulation/
+├── api/
+│   └── index.py          # Vercel Serverless Function entry point
 ├── clients/
 │   ├── index.html        # Secure Payment Checkout Demo Page
 │   ├── main.css          # Glassmorphism UI & Layout Styling
@@ -23,6 +25,7 @@ keylogger_simulation/
 ├── server/
 │   ├── app.py            # Flask Backend Status & Logging Server
 │   └── server_details.html # Monitoring Dashboard Interface
+├── vercel.json           # Vercel Routing Configuration
 ├── requirements.txt      # Python Dependencies
 └── README.md             # Project Documentation
 ```
@@ -33,6 +36,7 @@ keylogger_simulation/
 | :--- | :--- | :--- |
 | **Client Frontend** | HTML5 / CSS3 / Vanilla JS | Simulates a secure event payment checkout page with dynamic payment method forms (Card, UPI, Net Banking). |
 | **Server Backend** | Python / Flask / Flask-CORS | Provides endpoints (`/log` and `/status`) to monitor active client sessions and render status dashboards. |
+| **Vercel Serverless** | Vercel Python Runtime | Serverless deployment entry point routing requests to the Flask application. |
 
 ---
 
@@ -61,6 +65,13 @@ The server will run locally on `http://127.0.0.1:5000`.
 1. Open `clients/index.html` in any modern web browser.
 2. Interact with the payment form (select payment options, type sample data).
 3. Open `server/server_details.html` in a browser to view real-time session status updates.
+
+### 4. Deploying to Vercel
+
+1. Push this repository to GitHub, GitLab, or Bitbucket.
+2. In the [Vercel Dashboard](https://vercel.com/dashboard), click **"Add New..."** > **"Project"** and import the repository.
+3. Vercel automatically detects `vercel.json` and installs dependencies from `requirements.txt`.
+4. Click **Deploy**. Your Flask app will be live with serverless function routing.
 
 ---
 
