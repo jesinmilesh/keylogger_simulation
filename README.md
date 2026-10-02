@@ -66,12 +66,23 @@ The server will run locally on `http://127.0.0.1:5000`.
 2. Interact with the payment form (select payment options, type sample data).
 3. Open `server/server_details.html` in a browser to view real-time session status updates.
 
-### 4. Deploying to Vercel
+### 4. Deploying to Vercel & CI/CD Pipeline
 
-1. Push this repository to GitHub, GitLab, or Bitbucket.
-2. In the [Vercel Dashboard](https://vercel.com/dashboard), click **"Add New..."** > **"Project"** and import the repository.
-3. Vercel automatically detects `vercel.json` and installs dependencies from `requirements.txt`.
-4. Click **Deploy**. Your Flask app will be live with serverless function routing.
+Any changes made in this repository can be automatically deployed to Vercel in two ways:
+
+#### Option A: Native Vercel Git Integration (Zero Configuration)
+1. Push this repository to GitHub (`https://github.com/jesinmilesh/keylogger_simulation.git`).
+2. Go to [Vercel Dashboard](https://vercel.com/dashboard) > **Add New...** > **Project** and import this repository.
+3. Once imported, **every commit pushed to the `main` branch automatically triggers a new deployment to Vercel**. Pull requests automatically generate preview deployments.
+
+#### Option B: GitHub Actions Workflow (`.github/workflows/deploy.yml`)
+If you want automated testing, validation, and CLI-based deployment on every push via GitHub Actions:
+1. In your GitHub repository settings, go to **Settings > Secrets and variables > Actions**.
+2. Add the following repository secrets:
+   - `VERCEL_TOKEN`: Personal Access Token from your [Vercel Account Settings](https://vercel.com/account/tokens).
+   - `VERCEL_ORG_ID`: Your Vercel team/user ID (found in `.vercel/project.json` or team settings).
+   - `VERCEL_PROJECT_ID`: Your Vercel project ID (found in Vercel project settings).
+3. The workflow will automatically validate the Python environment and deploy to production on every push to `main`.
 
 ---
 
